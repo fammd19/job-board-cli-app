@@ -28,7 +28,7 @@ def handle_yes_no(message):
 def main_menu():
     heading ("main menu")
     print("1. Jobs - view and filter open jobs")
-    print("1. Applications - check your applications")
+    print("2. Applications - check your applications")
     print("3. Update - update your login details")
     print("4. Logout")
 
@@ -110,22 +110,55 @@ def welcome():
 
 
 
-def show_job_details():
-    pass
+def show_job_details(id):
+    heading("Job details")
 
 
 def apply():
     pass
 
 
+def filter_jobs():
+    print("""Filter by:
+            1. Industry
+            2. Company
+            3. Title
+            4. Salary
+            Please select an option""")
+
+    choice = input()
+
 def view_all_jobs():
     jobs = session.query(Job).all()
     for job in jobs:
         print (job)
 
+    heading("What would you like to do next?")
 
-def filter_jobs(filter):
-    pass
+    loop=True
+
+    while loop:
+
+        print("View a job - please enter the ID of the jobs you'd like to view")
+        print("Filter jobs - select 'filter'")
+        print("Menu - back to main menu")
+        choice = input()
+
+        if type(choice) == int:
+            loop = False
+            show_job_details(choice)
+
+        elif choice == "filter":
+            loop = False
+            filter_jobs()
+
+        elif choice == "menu":
+            loop = False
+            break
+
+        else:
+            print("Please select a valid option")
+
 
 
 def check_applications():
@@ -151,19 +184,19 @@ def start():
     while loop:
         choice = main_menu()
         while True:
-            if choice.lower() == "jobs":
+            if choice.lower() == "jobs" or choice == "1":
                 view_all_jobs()
                 break
-            elif choice.lower() == "applications":
+            elif choice.lower() == "applications" or choice == "2":
                 pass
-            elif choice.lower() == "update":
+            elif choice.lower() == "update" or choice == "3":
                 pass
-            elif choice.lower() == "logout" or choice.lower() == "quit" or choice.lower() == "exit":
+            elif choice.lower() == "logout" or choice.lower() == "quit" or choice.lower() == "exit" or choice == "4":
                 loop = False
                 break
-            
             else:
                 print("Invalid input. Please select again:")
+                choice = input()
 
     print("Thanks for using the Job Board CLI App!")
 
