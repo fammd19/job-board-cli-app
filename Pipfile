@@ -1,0 +1,9 @@
+[packages]
+ipdb = "*"
+colorama = "*"
+sqlalchemy = "*"
+faker = "*"
+alembic = "*"
+
+[requires]
+python_full_version = "3.8"
