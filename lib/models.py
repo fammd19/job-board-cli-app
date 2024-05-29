@@ -28,9 +28,7 @@ class Job (Base):
 class Candidate (Base):
     __tablename__ = "candidates"
     id = Column (Integer(), primary_key=True)
-    first_name = Column (String(), nullable=False)
-    family_name = Column (String(), nullable=False)
-    profession = Column (String(), nullable=False)
+    full_name = Column (String(), nullable=False)
     email = Column (String(), nullable=False)
 
     #many-to-many link for candidates to jobs through applications
