@@ -14,3 +14,6 @@ def clear():
         os.system("clear")
     else:
         os.system("cls")
+
+def wait():
+    os.wait()

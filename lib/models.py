@@ -22,7 +22,7 @@ class Job (Base):
     candidates = association_proxy("applications", "candidate", creator = lambda c: Application(candidate=c))
 
     def __repr__(self):
-        return f"{self.id}: {self.title}, {self.city}"
+        return f"{self.id}: {self.title} - {self.department}, {self.city}"
     
 
 class Candidate (Base):
@@ -36,7 +36,7 @@ class Candidate (Base):
     jobs = association_proxy("applications", "job", creator = lambda j: Application(job=j))
 
     def __repr__(self):
-        return f"{self.id}: {self.first_name} {self.family_name}, {self.profession}"
+        return f"{self.id}: {self.full_name}, {self.email}"
 
 class Company (Base):
     __tablename__ = "companies"
@@ -64,4 +64,4 @@ class Application (Base):
     candidate = relationship("Candidate", back_populates="applications")
 
     def __repr__(self):
-        return f"ID: {self.id} | Job ID: {self.job_id} | Candidate ID: {self.candidate_id}"
+        return f"ID: {self.id} | {self.job.title}, {self.job.department}"
