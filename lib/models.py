@@ -50,7 +50,7 @@ class Company (Base):
     jobs = relationship("Job", backref=backref("company"))
 
     def __repr__(self):
-        return f"{self.id}: {self.name}, {self.industry}"
+        return f"{self.name}, {self.industry}"
 
 class Application (Base):
     __tablename__ = "applications"
@@ -64,4 +64,4 @@ class Application (Base):
     candidate = relationship("Candidate", back_populates="applications")
 
     def __repr__(self):
-        return f"ID: {self.id} | {self.job.title}, {self.job.department}"
+        return f"Application ID: {self.id} | {self.job.title}, {self.job.department}"

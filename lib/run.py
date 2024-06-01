@@ -1,7 +1,19 @@
 from env import session, clear
 from models import Job, Candidate, Company, Application
 from sqlalchemy import func, and_
+from colorama import Fore, Back, Style
 import re
+
+#once you've applied, not repspongin to no on no withdraw application - sorted?
+#filtering by salay not working - sorted. Was showing less than min salary
+#error handling on filters - sorted? Loop in wrong place
+#application id is confusing in __repr__ - sorted> Updated defauult output for apllication and company 
+#change job display to show only 10 at a time, then show next 10 as y/n
+#once details are updated: show details
+#when logging back in, show name of person logging in before clear - sorted?
+
+
+
 
 logged_user = None
 
@@ -11,7 +23,7 @@ sizes = ["1-10","11-50","51-100","101-200","200-500","500+"]
 
 def heading(text):
     print("*"*30)
-    print(text.upper())
+    print(Fore.YELLOW + text.upper() +Style.RESET_ALL)
     print("*"*30)
 
 
@@ -89,8 +101,6 @@ def login(email):
     global logged_user
     logged_user = user
 
-    print(user)
-
 
 def check_email(email):
     regex = r"^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$"
@@ -162,7 +172,7 @@ def show_job_details(id):
             id = input()
     
 def apply(job, company):
-    choice = handle_yes_no("Would you like to apply for this job (y/n)?")
+    choice = handle_yes_no("Would you like to apply for this job?"+Style.BRIGHT+" (y/n)"+Style.RESET_ALL)
     if choice:
         applications = session.query(Application).filter(Application.candidate_id==logged_user.id).all()
         if len(applications) <= 3:
@@ -175,8 +185,9 @@ def apply(job, company):
                 new_application = Application(job_id=job.id, candidate_id=logged_user.id)    
                 session.add(new_application)
                 session.commit()
+                clear()
                 print(f"Congratulations! You've successfully applied to {job.title} at {company.name}")
-                break
+                show_applications()
 
         else:
             clear()
@@ -254,7 +265,7 @@ def filter_jobs():
         elif choice.lower() == "salary" or choice == "4":
             print("Please enter a minimum salary:")
             min_sal = input()
-            jobs = session.query(Job).filter(Job.salary<=min_sal).all()
+            jobs = session.query(Job).filter(Job.salary>=min_sal).all()
             for job in jobs:
                 print(job)
             print("Select an id to show the jobs details, or press any key to go the main menu")
@@ -266,7 +277,6 @@ def filter_jobs():
 
         else:
             print("Invalid input. Please select again:")
-            choice = input()
 
 
 def view_all_jobs():
@@ -311,32 +321,32 @@ def show_applications():
             for application in applications:
                 company = session.query(Company).filter(Company.id == application.job.company_id).first()
                 print(f"{application} | {company}")
-            choice = handle_yes_no("Would you like to withdraw any applications?")
+            choice = handle_yes_no("Would you like to withdraw any applications?"+Style.BRIGHT+" (y/n)"+Style.RESET_ALL)
             if choice:
-                print("Please enter the ID to withdraw")
+                print(Fore.RED+"Please enter the ID to withdraw:"+Style.RESET_ALL)
                 id = input()
-                try:
-                    withdraw(id)
-                except ValueError:
-                    print("Invalid input. Please enter a valid application ID.")
+                withdraw(id)
             else:
                 loop = False
         else:
             print("You have not applied to any jobs yet\n")
+            choice = handle_yes_no("Would you like to view open jobs?"+Style.BRIGHT+" (y/n)"+Style.RESET_ALL)
+            if choice:
+                view_all_jobs()
             break
 
 
 
 def update_details():
     user_to_update = session.query(Candidate).filter(Candidate.id==logged_user.id).first()
-    choice = handle_yes_no("Update name?")
+    choice = handle_yes_no("Update name?"+Style.BRIGHT+" (y/n)"+Style.RESET_ALL)
     if choice: 
         print("Enter updated name:")
         name=input()
         user_to_update.full_name = name
         logged_user.full_name = name
         session.commit()
-    choice = handle_yes_no("Update email?")
+    choice = handle_yes_no("Update email?"+Style.BRIGHT+" (y/n)"+Style.RESET_ALL)
     if choice:
         print("Enter updated email:")
         email=input()
@@ -345,23 +355,29 @@ def update_details():
         logged_user.email = valid_email
         session.commit()
     print(f"{logged_user.full_name} - {logged_user.email}")
+    print("Press enter to go back to the main menu")
+    input()
 
 def delete_profile():
     global logged_user
     print("Deleting your profile will remove any open applications and log you out")
 
-    choice = handle_yes_no("Are you sure you want to delete your profile?")
+    choice = handle_yes_no(Fore.RED+"Are you sure you want to delete your profile?"+Style.BRIGHT+" (y/n)"+Style.RESET_ALL)
     if choice:
         user_to_delete = session.query(Candidate).filter(Candidate.id==logged_user.id).first()
         session.delete(user_to_delete)
         session.commit()
+        print("Account successfully deleted")
         logged_user = None
 
 def candidate_details():
     print(f"Name: {logged_user.full_name}\nEmail: {logged_user.email}")
-    choice = handle_yes_no("Do you want to update these details (y/n)?")
+    choice = handle_yes_no("Do you want to update your details?"+Style.BRIGHT+" (y/n)"+Style.RESET_ALL)
     if choice:
         update_details()
+    choice = handle_yes_no("Do you want to delete your account?"+Style.BRIGHT+" (y/n)"+Style.RESET_ALL)
+    if choice:
+        delete_profile()
 
 def start():
     welcome()
@@ -384,18 +400,20 @@ def start():
                         show_applications()
                         break
                     elif choice.lower() == "update" or choice == "3":
+                        clear()
                         candidate_details()
                         break
                     elif choice.lower() == "delete" or choice == "4":
+                        clear()
                         delete_profile()
                         break
                     elif choice.lower() == "logout" or choice.lower() == "quit" or choice.lower() == "exit" or choice == "5":
+                        clear()
                         loop = False
                         break
                     else:
                         print("Invalid input. Please select again:")
                         choice = input()
-
     print("Thanks for using the Job Board CLI App!")
 
 
