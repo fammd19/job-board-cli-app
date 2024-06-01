@@ -1,12 +1,12 @@
 from env import session, clear
 from models import Job, Candidate, Company, Application
-from sqlalchemy import and_
+from sqlalchemy import func, and_
 import re
 
 logged_user = None
 
 departments = ["Finance","Human Resources","Marketing","Operations","Sales","Technology"]
-industries = ["Agriculture","Construction","Education","Financial Services","Food & Beverage","Healthcare","Hopitality","Insurance","Legal Services","Manufactuting","Media & Entertainment","Professional Services","Real Estate","Retail","Recruitment","Technology"]
+industries = ["Agriculture","Construction","Health & Education","Financial Services","Hopitality","Legal","Manufactuting","Retail","Technology"]
 sizes = ["1-10","11-50","51-100","101-200","200-500","500+"]
 
 def heading(text):
@@ -164,17 +164,24 @@ def show_job_details(id):
 def apply(job, company):
     choice = handle_yes_no("Would you like to apply for this job (y/n)?")
     if choice:
-        application = session.query(Application).filter(and_(Application.job_id==job.id, Application.candidate_id==logged_user.id)).first()
-        if application:
-            print("You've already applied for this role. Here are your current applications:")
-            show_applications()
+        applications = session.query(Application).filter(Application.candidate_id==logged_user.id).all()
+        if len(applications) <= 3:
+            application = session.query(Application).filter(and_(Application.job_id==job.id, Application.candidate_id==logged_user.id)).first()
+            if application:
+                clear()
+                print("You've already applied for this role. Here are your current applications:")
+                show_applications()
+            else:
+                new_application = Application(job_id=job.id, candidate_id=logged_user.id)    
+                session.add(new_application)
+                session.commit()
+                print(f"Congratulations! You've successfully applied to {job.title} at {company.name}")
+                break
 
         else:
-            new_application = Application(job_id=job.id, candidate_id=logged_user.id)    
-            session.add(new_application)
-            session.commit()
-            print(f"Congratulations! You've successfully applied to {job.title} at {company.name}")
-
+            clear()
+            print("You've applied for the maximum number of jobs. Here are your existing applications:")
+            show_applications()
 
 def filter_jobs():
     print("""Filter by:
@@ -195,7 +202,7 @@ def filter_jobs():
                 print(industry)
             print("Please select an industry")
             choice = input()
-            jobs = session.query(Job).join(Company, Job.company_id == Company.id).filter(Company.industry == choice)
+            jobs = session.query(Job).join(Company, Job.company_id == Company.id).filter(func.lower(Company.industry) == choice)
             for job in jobs:
                 print(job)
             print("Select an id to show the jobs details, or press any key to go the main menu")
@@ -223,19 +230,26 @@ def filter_jobs():
 
         elif choice.lower() == "department" or choice == "3":
             clear()
+
             for department in departments:
                 print(department)
             print("Please select a department")
+
             choice = input()
-            jobs = session.query(Job).filter(Job.department == choice).all()
-            for job in jobs:
-                print(job)
-            print("Select an id to show the jobs details, or press any key to go the main menu")
-            choice = input()
-            if choice.isdigit():
-                job_id = int(choice)
-                show_job_details(job_id)
-            break
+            jobs = session.query(Job).filter(func.lower(Job.department) == choice.lower()).all()
+
+            if len(jobs)>0:
+                for job in jobs:
+                    print(job)
+                print("Select an id to show the jobs details, or press any key to go the main menu")
+                choice = input()
+                if choice.isdigit():
+                    job_id = int(choice)
+                    show_job_details(job_id)
+            
+            else:
+                print(f"There are no jobs currently available in {choice}")
+                view_all_jobs()
 
         elif choice.lower() == "salary" or choice == "4":
             print("Please enter a minimum salary:")
@@ -293,7 +307,6 @@ def show_applications():
     while loop:
         applications = session.query(Application).filter(Application.candidate_id==logged_user.id).all()
         if len(applications)>0:
-            clear()
             heading("Current applications")
             for application in applications:
                 company = session.query(Company).filter(Company.id == application.job.company_id).first()
@@ -309,7 +322,7 @@ def show_applications():
             else:
                 loop = False
         else:
-            print("You have not applied to any jobs yet")
+            print("You have not applied to any jobs yet\n")
             break
 
 
@@ -367,6 +380,7 @@ def start():
                         view_all_jobs()
                         break
                     elif choice.lower() == "applications" or choice == "2":
+                        clear()
                         show_applications()
                         break
                     elif choice.lower() == "update" or choice == "3":
