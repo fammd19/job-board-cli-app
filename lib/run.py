@@ -22,16 +22,20 @@ industries = ["Agriculture","Construction","Health & Education","Financial Servi
 sizes = ["1-10","11-50","51-100","101-200","200-500","500+"]
 
 def heading(text):
+    clear()
     print("*"*30)
     print(Fore.YELLOW + text.upper() +Style.RESET_ALL)
     print("*"*30)
 
+def subheading(text):
+    clear()
+    print(Fore.CYAN + text.upper() +Style.RESET_ALL)
 
 def handle_yes_no(message):
     response = True
 
     while True:
-        print(message)
+        print(f"{message}" +Style.BRIGHT+" (y/n)"+Style.RESET_ALL)
         choice = input()
 
         if choice.lower() == "yes" or choice.lower() == "y":
@@ -43,11 +47,11 @@ def handle_yes_no(message):
 
 
 def main_menu():
-    heading ("main menu")
-    print("1. Jobs - view and filter open jobs")
-    print("2. Applications - check your applications")
-    print("3. Update - update your login details")
-    print("4. Delete - delete account and exit")
+    heading("main menu")
+    print("1. All Jobs - view all open jobs")
+    print("2. Filter - filter jobs by department, industry, company size or salary")
+    print("3. Applications - check your applications")
+    print("4. Update - update your login details or delete your account")
     print("5. Logout")
 
     print("Please enter your choice:")
@@ -153,7 +157,7 @@ def show_job_details(id):
         company = session.query(Company).join(Job, Company.id == Job.company_id).filter(Job.id==id).first()
 
         if job:
-            heading("Job details")
+            subheading("Job details")
 
             print(f"""
             {job.id}: {job.title}, {job.department}
@@ -168,11 +172,11 @@ def show_job_details(id):
             break
 
         else:
-            print("Please select a valid job ID or press any key to go to the main menu")
+            print("Please select a valid job ID or press enter to go to the main menu")
             id = input()
     
 def apply(job, company):
-    choice = handle_yes_no("Would you like to apply for this job?"+Style.BRIGHT+" (y/n)"+Style.RESET_ALL)
+    choice = handle_yes_no("Would you like to apply for this job?")
     if choice:
         applications = session.query(Application).filter(Application.candidate_id==logged_user.id).all()
         if len(applications) <= 3:
@@ -195,12 +199,13 @@ def apply(job, company):
             show_applications()
 
 def filter_jobs():
-    print("""Filter by:
+    subheading("Filter by:")
+    print("""
             1. Industry
             2. Company size
             3. Department
             4. Salary
-            Please select an option""")
+            Please select an option or "menu" for main menu""")
 
     loop = True
 
@@ -208,40 +213,29 @@ def filter_jobs():
         choice = input()
 
         if choice.lower() == "industry" or choice == "1":
-            clear()
+            subheading("Industries")
             for industry in industries:
                 print(industry)
-            print("Please select an industry")
-            choice = input()
-            jobs = session.query(Job).join(Company, Job.company_id == Company.id).filter(func.lower(Company.industry) == choice)
-            for job in jobs:
-                print(job)
-            print("Select an id to show the jobs details, or press any key to go the main menu")
-            choice = input()
-            if choice.isdigit():
-                job_id = int(choice)
-                show_job_details(job_id)
+            print("Please select an industry:")
+            choice = input().lower()
+            jobs = session.query(Job).join(Company, Job.company_id == Company.id).filter(func.lower(Company.industry) == choice).all()
+            show_filtered_jobs(jobs)
             break
 
         elif choice.lower() == "company size" or choice.lower() == "company" or choice.lower() == "size" or choice == "2":
-            clear()
+            subheading("Company Sizes")
             for size in sizes:
                 print(size)
             print("Please select a company size")
+
             choice = input()
-            jobs = session.query(Job).join(Company, Job.company_id == Company.id).filter(Company.size == choice)
-            for job in jobs:
-                print(job)
-            print("Select an id to show the jobs details, or press any key to go the main menu")
-            choice = input()
-            if choice.isdigit():
-                job_id = int(choice)
-                show_job_details(job_id)
+            jobs = session.query(Job).join(Company, Job.company_id == Company.id).filter(Company.size == choice).all()
+
+            show_filtered_jobs(jobs)
             break
 
         elif choice.lower() == "department" or choice == "3":
-            clear()
-
+            subheading("Departments")
             for department in departments:
                 print(department)
             print("Please select a department")
@@ -249,35 +243,40 @@ def filter_jobs():
             choice = input()
             jobs = session.query(Job).filter(func.lower(Job.department) == choice.lower()).all()
 
-            if len(jobs)>0:
-                for job in jobs:
-                    print(job)
-                print("Select an id to show the jobs details, or press any key to go the main menu")
-                choice = input()
-                if choice.isdigit():
-                    job_id = int(choice)
-                    show_job_details(job_id)
-            
-            else:
-                print(f"There are no jobs currently available in {choice}")
-                view_all_jobs()
+            show_filtered_jobs(jobs)
+            break
 
         elif choice.lower() == "salary" or choice == "4":
             print("Please enter a minimum salary:")
             min_sal = input()
+            heading(f"Jobs with a salary over {choice}")
             jobs = session.query(Job).filter(Job.salary>=min_sal).all()
-            for job in jobs:
-                print(job)
-            print("Select an id to show the jobs details, or press any key to go the main menu")
-            choice = input()
-            if choice.isdigit():
-                job_id = int(choice)
-                show_job_details(job_id)
+            show_filtered_jobs(jobs)
+            break
+
+        elif choice.lower() == "menu":
             break
 
         else:
             print("Invalid input. Please select again:")
 
+def show_filtered_jobs(jobs):
+    if len(jobs)>0:
+        heading(f"Filtered jobs")
+        for job in jobs:
+            print(job)
+        print("Select an id to show the jobs details, or press enter to go back:")
+        choice = input()
+        if choice.isdigit():
+            job_id = int(choice)
+            show_job_details(job_id)
+        else:
+            filter_jobs()
+            
+    else:
+        subheading(f"Jobs in {choice}")
+        print(f"There are no jobs currently available in {choice}")
+        view_all_jobs()
 
 def view_all_jobs():
     jobs = session.query(Job).all()
@@ -307,12 +306,16 @@ def view_all_jobs():
 
 def withdraw (id):
     app_to_delete = session.query(Application).filter(Application.id==id).first()
-    session.delete(app_to_delete)
-    session.commit()
+    if app_to_delete:
+        session.delete(app_to_delete)
+        session.commit()
+    else:
+        print("You don't appear to have an application with that ID")
+        show_applications()
+
 
 
 def show_applications():
-    clear()
     loop = True
     while loop:
         applications = session.query(Application).filter(Application.candidate_id==logged_user.id).all()
@@ -321,7 +324,7 @@ def show_applications():
             for application in applications:
                 company = session.query(Company).filter(Company.id == application.job.company_id).first()
                 print(f"{application} | {company}")
-            choice = handle_yes_no("Would you like to withdraw any applications?"+Style.BRIGHT+" (y/n)"+Style.RESET_ALL)
+            choice = handle_yes_no("Would you like to withdraw any applications?")
             if choice:
                 print(Fore.RED+"Please enter the ID to withdraw:"+Style.RESET_ALL)
                 id = input()
@@ -329,8 +332,10 @@ def show_applications():
             else:
                 loop = False
         else:
+            clear()
+            subheading("Current applications")
             print("You have not applied to any jobs yet\n")
-            choice = handle_yes_no("Would you like to view open jobs?"+Style.BRIGHT+" (y/n)"+Style.RESET_ALL)
+            choice = handle_yes_no("Would you like to view open jobs?")
             if choice:
                 view_all_jobs()
             break
@@ -339,14 +344,14 @@ def show_applications():
 
 def update_details():
     user_to_update = session.query(Candidate).filter(Candidate.id==logged_user.id).first()
-    choice = handle_yes_no("Update name?"+Style.BRIGHT+" (y/n)"+Style.RESET_ALL)
+    choice = handle_yes_no("Update name?")
     if choice: 
         print("Enter updated name:")
         name=input()
         user_to_update.full_name = name
         logged_user.full_name = name
         session.commit()
-    choice = handle_yes_no("Update email?"+Style.BRIGHT+" (y/n)"+Style.RESET_ALL)
+    choice = handle_yes_no("Update email?")
     if choice:
         print("Enter updated email:")
         email=input()
@@ -362,7 +367,7 @@ def delete_profile():
     global logged_user
     print("Deleting your profile will remove any open applications and log you out")
 
-    choice = handle_yes_no(Fore.RED+"Are you sure you want to delete your profile?"+Style.BRIGHT+" (y/n)"+Style.RESET_ALL)
+    choice = handle_yes_no(Fore.RED+"Are you sure you want to delete your profile?"+Style.RESET_ALL)
     if choice:
         user_to_delete = session.query(Candidate).filter(Candidate.id==logged_user.id).first()
         session.delete(user_to_delete)
@@ -371,11 +376,12 @@ def delete_profile():
         logged_user = None
 
 def candidate_details():
+    subheading("Your details")
     print(f"Name: {logged_user.full_name}\nEmail: {logged_user.email}")
-    choice = handle_yes_no("Do you want to update your details?"+Style.BRIGHT+" (y/n)"+Style.RESET_ALL)
+    choice = handle_yes_no("Do you want to update your details?")
     if choice:
         update_details()
-    choice = handle_yes_no("Do you want to delete your account?"+Style.BRIGHT+" (y/n)"+Style.RESET_ALL)
+    choice = handle_yes_no("Do you want to delete your account?")
     if choice:
         delete_profile()
 
@@ -392,23 +398,20 @@ def start():
             else:
                 choice = main_menu()
                 while True:
-                    if choice.lower() == "jobs" or choice == "1":
+                    if choice.lower() == "jobs" or choice.lower() == "all" or choice == "1":
                         view_all_jobs()
                         break
-                    elif choice.lower() == "applications" or choice == "2":
-                        clear()
+                    elif choice.lower() == "filter" or choice == "2":
+                        filter_jobs()
+                        break
+                    elif choice.lower() == "applications" or choice == "3":
                         show_applications()
                         break
-                    elif choice.lower() == "update" or choice == "3":
-                        clear()
+                    elif choice.lower() == "update" or choice.lower() == "delete" or choice == "4":
                         candidate_details()
                         break
-                    elif choice.lower() == "delete" or choice == "4":
-                        clear()
-                        delete_profile()
-                        break
                     elif choice.lower() == "logout" or choice.lower() == "quit" or choice.lower() == "exit" or choice == "5":
-                        clear()
+                        subheading("Logging out...")
                         loop = False
                         break
                     else:
