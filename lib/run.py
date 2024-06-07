@@ -1,4 +1,4 @@
-from env import session, clear
+from env import session, clear, departments as dep_list, industries as ind_list, sizes as size_list
 from models import Job, Candidate, Company, Application
 from sqlalchemy import func, and_
 from colorama import Fore, Back, Style
@@ -6,9 +6,10 @@ import re
 
 logged_user = None
 
-departments = [(1,"Finance"), (2,"Human Resources"), (3,"Marketing"),(4,"Operations"),(5,"Sales"),(6,"Technology")]
-industries = [(1,"Agriculture"), (2,"Construction"),(3,"Health & Education"),(4,"Financial Services"),(5,"Hospitality"),(6,"Legal"),(7,"Manufactuting"),(8,"Retail"),(9,"Technology")]
-sizes = [(1,"1-10"),(2,"11-50"),(3,"51-100"),(4,"101-200"),(5,"200-500"),(6,"500+")]
+departments = [(i+1, department) for i, department in enumerate(dep_list)]
+industries = [(i+1, industry) for i, industry in enumerate(ind_list)]
+sizes = [(i+1, size) for i, size in enumerate(size_list)]
+
 
 def heading(text):
     print("*"*30)
@@ -168,6 +169,7 @@ def show_job_details(id):
             print("Please select a valid job ID or press enter to go to the main menu")
             id = input()
     
+
 def apply(job, company):
     choice = handle_yes_no("Would you like to apply for this job?")
     if choice:
@@ -200,6 +202,7 @@ def lookup(id,filter_options):
             choice = option[1]
             return choice
     return None
+
 
 def get_category_jobs(category):
     i=1
