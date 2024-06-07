@@ -8,7 +8,7 @@ def create_companies():
             name = fake.company(),
             industry = choice(industries),
             size = choice(sizes)
-        ) for i in range (15)]
+        ) for i in range (10)]
 
     session.add_all(companies)
     session.commit()
@@ -25,7 +25,7 @@ def create_jobs():
             date_posted = fake.date_this_year(),
             city = fake.city(),
             company_id = randint(1,15)
-        ) for i in range (50)]
+        ) for i in range (30)]
 
     session.add_all(jobs)
     session.commit()
