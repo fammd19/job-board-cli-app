@@ -24,7 +24,7 @@ def create_jobs():
             department = choice(departments),
             date_posted = fake.date_this_year(),
             city = fake.city(),
-            company_id = randint(1,15)
+            company_id = randint(1,10)
         ) for i in range (30)]
 
     session.add_all(jobs)

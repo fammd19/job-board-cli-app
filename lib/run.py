@@ -88,7 +88,7 @@ def login(email):
                 session.add(user)
                 session.commit()
                 clear()
-                print(f"Welcome {user.full_name}.You have successfully registered. What would you like to do first?")
+                print(f"Welcome {user.full_name}. You have successfully registered. What would you like to do first?")
                 break
 
             else:
@@ -104,7 +104,7 @@ def login(email):
 
 
 def check_email(email):
-    regex = r"^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$"
+    regex = r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,7}\b"
     valid_email = re.match(regex, email)
 
     if not logged_user:
@@ -221,20 +221,20 @@ def get_category_jobs(category):
         elif option_name and category == industries:
             jobs = session.query(Job).join(Company, Job.company_id == Company.id).filter(func.lower(Company.industry) == option_name.lower()).all()
         else:
-            print("Invalid department ID.")
+            print(f"Invalid choice. Please try again.")
             filter_jobs()
     else:
         if category == departments:
             jobs = session.query(Job).filter(func.lower(Job.department) == choice).all()
         elif category == sizes:
             jobs = session.query(Job).join(Company, Job.company_id == Company.id).filter(func.lower(Company.size) == choice).all()
-        else:
+        elif category == industries:
             jobs = session.query(Job).join(Company, Job.company_id == Company.id).filter(func.lower(Company.industry) == choice).all()
-        if not jobs:
-            print("There are no jobs that meet your current criteria")
-            filter_jobs()
-    show_filtered_jobs(jobs)
-
+    if jobs:
+        show_filtered_jobs(jobs)
+    else:
+        print("There are no jobs that meet your current criteria")
+        filter_jobs()
 
 def filter_jobs():
     subheading("Filter jobs by:")
@@ -251,16 +251,19 @@ def filter_jobs():
         choice = input()
 
         if choice.lower() == "industry" or choice == "1":
+            clear()
             subheading("Industries")
             get_category_jobs(industries)
             break
 
         elif choice.lower() == "company size" or choice.lower() == "company" or choice.lower() == "size" or choice == "2":
+            clear()
             subheading("Company Sizes")
             get_category_jobs(sizes)
             break
         
         elif choice.lower() == "department" or choice == "3":
+            clear()
             subheading("Departments")
             get_category_jobs(departments)
             break
@@ -345,7 +348,7 @@ def view_all_jobs():
 
 def withdraw (id):
     clear()
-    app_to_delete = session.query(Application).filter(Application.id==id and Application.candidate_id == logged_user.id).first()
+    app_to_delete = session.query(Application).filter(Application.id==id, Application.candidate_id==logged_user.id).first()
     if app_to_delete:
         session.delete(app_to_delete)
         session.commit()
