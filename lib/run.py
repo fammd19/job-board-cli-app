@@ -428,7 +428,7 @@ def delete_profile():
 def candidate_details():
     subheading("Your details")
     print(f"Name: {logged_user.full_name}\nEmail: {logged_user.email}")
-    print("Would you like to 'update' your details or 'delete' your account?")
+    print("Would you like to 'update' your details or 'delete' your account? \nSelect 'menu' to go back")
     loop = True
     while loop:
         choice = input()
