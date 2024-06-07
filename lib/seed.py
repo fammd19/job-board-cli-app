@@ -29,10 +29,10 @@ def create_jobs():
             title = choice(titles),
             salary = randrange(0,200000,1000),
             department = choice(departments),
-            date_posted = fake.date(),
+            date_posted = fake.date_this_year(),
             city = fake.city(),
             company_id = randint(1,15)
-        ) for i in range (30)]
+        ) for i in range (50)]
 
     session.add_all(jobs)
     session.commit()
