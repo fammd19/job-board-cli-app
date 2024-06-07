@@ -4,14 +4,11 @@ from sqlalchemy import func, and_
 from colorama import Fore, Back, Style
 import re
 
-#after view job, go back to previous search
-
 logged_user = None
 
 departments = [(1,"Finance"), (2,"Human Resources"), (3,"Marketing"),(4,"Operations"),(5,"Sales"),(6,"Technology")]
 industries = [(1,"Agriculture"), (2,"Construction"),(3,"Health & Education"),(4,"Financial Services"),(5,"Hopitality"),(6,"Legal"),(7,"Manufactuting"),(8,"Retail"),(9,"Technology")]
 sizes = [(1,"1-10"),(2,"11-50"),(3,"51-100"),(4,"101-200"),(5,"200-500"),(6,"500+")]
-# sizes = ["1-10","11-50","51-100","101-200","200-500","500+"]
 
 def heading(text):
     print("*"*30)
@@ -174,7 +171,7 @@ def apply(job, company):
     choice = handle_yes_no("Would you like to apply for this job?")
     if choice:
         applications = session.query(Application).filter(Application.candidate_id==logged_user.id).all()
-        if len(applications) <= 3:
+        if len(applications) < 3:
             application = session.query(Application).filter(and_(Application.job_id==job.id, Application.candidate_id==logged_user.id)).first()
             if application:
                 print("You've already applied for this role. Here are your current applications:")
@@ -331,7 +328,7 @@ def show_filtered_jobs(jobs):
         heading(f"Filtered jobs")
         for job in jobs:
             print(job)
-        print("Select an id to show the jobs details, or press enter to go back:")
+        print("Select an id to show the jobs details, or press enter to go back to the filter menu:")
         choice = input()
         if choice.isdigit():
             job_id = int(choice)
