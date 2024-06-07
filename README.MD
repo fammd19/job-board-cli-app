@@ -7,7 +7,7 @@ The Job Board CLI App is a python app designed to mimic a simplified job site, w
 1. Clone the repo to your local machine
 2. Run the following commands:
     - `pipenv install & pipenv shell`
-    - `alembic upgrade head`
+    - `alembic upgrade head`\
     This will create the models and see the jobs and companies tables in the database
 3. To start the app, from the root directory run:
     `python lib/run.py`
