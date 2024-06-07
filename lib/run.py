@@ -7,7 +7,7 @@ import re
 logged_user = None
 
 departments = [(1,"Finance"), (2,"Human Resources"), (3,"Marketing"),(4,"Operations"),(5,"Sales"),(6,"Technology")]
-industries = [(1,"Agriculture"), (2,"Construction"),(3,"Health & Education"),(4,"Financial Services"),(5,"Hopitality"),(6,"Legal"),(7,"Manufactuting"),(8,"Retail"),(9,"Technology")]
+industries = [(1,"Agriculture"), (2,"Construction"),(3,"Health & Education"),(4,"Financial Services"),(5,"Hospitality"),(6,"Legal"),(7,"Manufactuting"),(8,"Retail"),(9,"Technology")]
 sizes = [(1,"1-10"),(2,"11-50"),(3,"51-100"),(4,"101-200"),(5,"200-500"),(6,"500+")]
 
 def heading(text):
@@ -15,8 +15,10 @@ def heading(text):
     print(Fore.YELLOW + text.upper() +Style.RESET_ALL)
     print("*"*30)
 
+
 def subheading(text):
     print(Fore.CYAN + text.upper() +Style.RESET_ALL)
+
 
 def handle_yes_no(message):
     response = True
@@ -139,7 +141,6 @@ def welcome():
     check_email(email)
 
 
-
 def show_job_details(id):
 
     loop = True
@@ -200,12 +201,37 @@ def lookup(id,filter_options):
             return choice
     return None
 
+def get_category_jobs(category):
+    i=1
+    for option in category:
+        print(f"{option[0]}. {option[1]}")
+        i=i+1
+    print(f"Please select an option:")
+    choice = input().lower()
+    if choice.isdigit():
+        option_id = int(choice)
+        option_name = next((name for id, name in category if id == option_id), None)
+        if option_name and category == departments:
+            jobs = session.query(Job).filter(func.lower(Job.department) == option_name.lower()).all()
+        elif option_name and category == sizes:
+            jobs = session.query(Job).join(Company, Job.company_id == Company.id).filter(func.lower(Company.size) == option_name.lower()).all()
+        elif option_name and category == industries:
+            jobs = session.query(Job).join(Company, Job.company_id == Company.id).filter(func.lower(Company.industry) == option_name.lower()).all()
+        else:
+            print("Invalid department ID.")
+            filter_jobs()
+    else:
+        if category == departments:
+            jobs = session.query(Job).filter(func.lower(Job.department) == choice).all()
+        elif category == sizes:
+            jobs = session.query(Job).join(Company, Job.company_id == Company.id).filter(func.lower(Company.size) == choice).all()
+        else:
+            jobs = session.query(Job).join(Company, Job.company_id == Company.id).filter(func.lower(Company.industry) == choice).all()
+        if not jobs:
+            print("There are no jobs that meet your current criteria")
+            filter_jobs()
+    show_filtered_jobs(jobs)
 
-def lookup(id, filter_options):
-    for option in filter_options:
-        if option[0] == id:
-            return option[1]
-    return None
 
 def filter_jobs():
     subheading("Filter jobs by:")
@@ -223,89 +249,17 @@ def filter_jobs():
 
         if choice.lower() == "industry" or choice == "1":
             subheading("Industries")
-            i=1
-            for industry in industries:
-                print(f"{industry[0]}. {industry[1]}")
-                i=i+1
-            print("Please select an industry:")
-            choice = input().lower()
-            if choice.isdigit():
-                industry_id = int(choice)
-                industry_name = next((name for id, name in industries if id == industry_id), None)
-                if industry_name:
-                    jobs = session.query(Job).join(Company, Job.company_id == Company.id).filter(func.lower(Company.industry) == industry_name.lower()).all()
-                else:
-                    print("Invalid industry ID.")
-                    filter_jobs()
-            else:
-                jobs = session.query(Job).join(Company, Job.company_id == Company.id).filter(func.lower(Company.industry) == choice).all()
-                if not jobs:
-                    print("Invalid option")
-                    filter_jobs()
-                    break
-            show_filtered_jobs(jobs)
+            get_category_jobs(industries)
             break
-
-        # elif choice.lower() == "company size" or choice.lower() == "company" or choice.lower() == "size" or choice == "2":
-        #     subheading("Company Sizes")
-        #     for size in sizes:
-        #         print(size)
-        #     print("Please select a company size")
-
-        #     choice = input()
-        #     jobs = session.query(Job).join(Company, Job.company_id == Company.id).filter(Company.size == choice).all()
-
-        #     show_filtered_jobs(jobs)
-        #     break
 
         elif choice.lower() == "company size" or choice.lower() == "company" or choice.lower() == "size" or choice == "2":
             subheading("Company Sizes")
-            i=1
-            for size in sizes:
-                print(f"{size[0]}. {size[1]}")
-                i=i+1
-            print("Please select a company size:")
-            choice = input().lower()
-            if choice.isdigit():
-                size_id = int(choice)
-                size_name = next((name for id, name in sizes if id == size_id), None)
-                if size_name:
-                    jobs = session.query(Job).join(Company, Job.company_id == Company.id).filter(func.lower(Company.size) == size_name.lower()).all()
-                else:
-                    print("Invalid size ID.")
-                    filter_jobs()
-            else:
-                jobs = session.query(Job).join(Company, Job.company_id == Company.id).filter(func.lower(Company.size) == choice).all()
-                if not jobs:
-                    print("Invalid option")
-                    filter_jobs()
-                    break
-            show_filtered_jobs(jobs)
+            get_category_jobs(sizes)
             break
         
         elif choice.lower() == "department" or choice == "3":
             subheading("Departments")
-            i=1
-            for department in departments:
-                print(f"{department[0]}. {department[1]}")
-                i=i+1
-            print("Please select a department:")
-            choice = input().lower()
-            if choice.isdigit():
-                department_id = int(choice)
-                department_name = next((name for id, name in departments if id == department_id), None)
-                if department_name:
-                    jobs = session.query(Job).filter(func.lower(Job.department) == department_name.lower()).all()
-                else:
-                    print("Invalid department ID.")
-                    filter_jobs()
-            else:
-                jobs = session.query(Job).filter(func.lower(Job.department) == choice).all()
-                if not jobs:
-                    print("Invalid option")
-                    filter_jobs()
-                    break
-            show_filtered_jobs(jobs)
+            get_category_jobs(departments)
             break
 
         elif choice.lower() == "salary" or choice == "4":
@@ -321,6 +275,8 @@ def filter_jobs():
 
         else:
             print("Invalid input. Please select again:")
+
+
 
 def show_filtered_jobs(jobs):
     clear()
@@ -339,6 +295,7 @@ def show_filtered_jobs(jobs):
     else:
         print(f"There are no jobs currently available that meet your conditions.")
         filter_jobs()
+
 
 def view_all_jobs():
     jobs = session.query(Job).all()
@@ -382,6 +339,7 @@ def view_all_jobs():
         else:
             print("Please select a valid option")
 
+
 def withdraw (id):
     clear()
     app_to_delete = session.query(Application).filter(Application.id==id and Application.candidate_id == logged_user.id).first()
@@ -392,7 +350,6 @@ def withdraw (id):
     else:
         print(f"You don't appear to have any applications with ID{id}. Here are your current applications:")
         show_applications()
-
 
 
 def show_applications():
@@ -422,7 +379,6 @@ def show_applications():
             break
 
 
-
 def update_details():
     user_to_update = session.query(Candidate).filter(Candidate.id==logged_user.id).first()
     choice = handle_yes_no("Update name?")
@@ -444,6 +400,7 @@ def update_details():
     subheading("Your details")
     print(f"{logged_user.full_name} - {logged_user.email}")
 
+
 def delete_profile():
     global logged_user
     print("Deleting your profile will remove any open applications and log you out")
@@ -460,6 +417,7 @@ def delete_profile():
         clear()
         print("Account successfully deleted")
         logged_user = None
+
 
 def candidate_details():
     subheading("Your details")
@@ -478,6 +436,7 @@ def candidate_details():
             break
         else:
             print("Please enter a valid option. You can select 'update', 'delete' or 'menu':")
+
 
 def start():
     welcome()
