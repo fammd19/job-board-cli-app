@@ -4,6 +4,9 @@ from sqlalchemy import func, and_
 from colorama import Fore, Back, Style
 import re
 
+#when updating email, allow user to go back?
+#easily check jd of a job already applied 
+
 logged_user = None
 
 departments = [(i+1, department) for i, department in enumerate(dep_list)]
@@ -12,20 +15,26 @@ sizes = [(i+1, size) for i, size in enumerate(size_list)]
 
 
 def heading(text):
-    print("*"*30)
-    print(Fore.YELLOW + text.upper() +Style.RESET_ALL)
-    print("*"*30)
 
+    print("\n"+"*"*30)
+    print(Fore.CYAN + text.upper() + Style.RESET_ALL)
+    print("*"*30)
 
 def subheading(text):
-    print(Fore.CYAN + text.upper() +Style.RESET_ALL)
+    print(Fore.CYAN + text.upper() + Style.RESET_ALL)
+
+def user_action(text):
+    print(f"{Fore.YELLOW} \n{text} {Style.RESET_ALL}")
+
+def user_hint(text):
+    print(Style.DIM + text + Style.RESET_ALL)
 
 
-def handle_yes_no(message):
+def handle_yes_no(message,colour=Fore.YELLOW):
     response = True
 
     while True:
-        print(f"{message}" +Style.BRIGHT+" (y/n)"+Style.RESET_ALL)
+        print(f"\n{colour}{message}{Style.BRIGHT} (y/n){Style.RESET_ALL}")
         choice = input()
 
         if choice.lower() == "yes" or choice.lower() == "y":
@@ -33,7 +42,7 @@ def handle_yes_no(message):
         elif choice.lower() == "no" or choice.lower() == "n":
             return False
         else:
-            print("Invalid input. Please select 'yes' or 'no'")
+            print("\nInvalid input. Please enter 'y' or 'n'")
 
 
 def main_menu():
@@ -44,7 +53,7 @@ def main_menu():
     print("4. Account - update your login details or delete your account")
     print("5. Logout")
 
-    print("Please enter your choice:")
+    user_action("Please enter your choice:")
 
     return input()
 
@@ -57,19 +66,19 @@ def login(email):
     if not user:
         loop = True
         while loop:
-            print("\nPlease enter your full name:")
-            print("If you've registered before, please type 'back' and re-enter your email")
+            user_action("Please enter your full name:")
+            user_hint("If you've registered before, please type 'back' and re-enter your email")
             name = input()
 
             if name == "back":
                 entry_error = True
                 while entry_error:
-                    print("Let's try again. Please enter your email:")
-                    print("Enter new to regsiter as a new user")
+                    user_action("\nLet's try again. Please enter your email:")
+                    user_hint("Enter 'new' to register as a new user")
                     email = input()
                     if email == "new":
                         entry_error = False
-                        print("Please enter the email you'd like to register with:")
+                        user_action("Please enter the email you'd like to register with:")
                         email = input()
                         check_email(email)
 
@@ -77,8 +86,8 @@ def login(email):
                         user = session.query(Candidate).filter(Candidate.email == email).first()
                         if user:
                             entry_error=False 
+                            loop = False
                             print(f"We've found you now! Welcome back {user.full_name}")
-                            break
                         else:
                             print("We still haven't found your details.")
                             entry_error=True 
@@ -88,7 +97,7 @@ def login(email):
                 session.add(user)
                 session.commit()
                 clear()
-                print(f"Welcome {user.full_name}. You have successfully registered. What would you like to do first?")
+                print(f"Welcome {user.full_name}. You have successfully registered.")
                 break
 
             else:
@@ -97,7 +106,7 @@ def login(email):
                     
     else:
         clear()
-        print(f"Welcome back {user.full_name}. What would you like to do?")
+        print(f"Welcome back {user.full_name}.")
 
     global logged_user
     logged_user = user
@@ -111,7 +120,7 @@ def check_email(email):
         if not valid_email:
             email_error = True
             while email_error:
-                print("Please enter a valid email:")
+                user_action("Invalid email. Please try again:")
                 email=input()
                 valid_email = re.match(regex, email)
                 if valid_email:
@@ -124,7 +133,7 @@ def check_email(email):
         if not valid_email:
             email_error = True
             while email_error:
-                print("Please enter a valid email:")
+                user_action("Please enter a valid email:")
                 email=input()
                 valid_email = re.match(regex, email)
                 if valid_email:
@@ -136,8 +145,8 @@ def check_email(email):
 
 def welcome():
 
-    subheading("Welcome to the Job Board CLI App")
-    print("Please enter your email address to login:")
+    print(Style.BRIGHT+"\n👋👋👋  Welcome to the Job Board CLI App 👋👋👋"+Style.RESET_ALL)
+    user_action("Please enter your email address to get started:")
     email = input()
     check_email(email)
 
@@ -166,7 +175,7 @@ def show_job_details(id):
             break
 
         else:
-            print("Please select a valid job ID or press enter to go to the main menu")
+            user_action("Please enter a valid job ID or press enter to go to the main menu")
             id = input()
     
 
@@ -209,7 +218,7 @@ def get_category_jobs(category):
     for option in category:
         print(f"{option[0]}. {option[1]}")
         i=i+1
-    print(f"Please select an option:")
+    user_action(f"Please select an option:")
     choice = input().lower()
     if choice.isdigit():
         option_id = int(choice)
@@ -221,7 +230,7 @@ def get_category_jobs(category):
         elif option_name and category == industries:
             jobs = session.query(Job).join(Company, Job.company_id == Company.id).filter(func.lower(Company.industry) == option_name.lower()).all()
         else:
-            print(f"Invalid choice. Please try again.")
+            print(f"Invalid choice. Please try again.\n")
             filter_jobs()
     else:
         if category == departments:
@@ -242,8 +251,8 @@ def filter_jobs():
             1. Industry
             2. Company size
             3. Department
-            4. Salary
-            Please select an option or 'menu' for main menu""")
+            4. Salary""")
+    user_action("Please select an option or 'menu' for main menu:")
 
     loop = True
 
@@ -269,7 +278,8 @@ def filter_jobs():
             break
 
         elif choice.lower() == "salary" or choice == "4":
-            print("Please enter a minimum salary:")
+            user_action("Please enter a minimum salary:")
+            user_hint("Please enter in the format '0000'")
             min_sal = input()
             jobs = session.query(Job).filter(Job.salary>=min_sal).all()
             show_filtered_jobs(jobs)
@@ -280,7 +290,7 @@ def filter_jobs():
             break
 
         else:
-            print("Invalid input. Please select again:")
+            user_action("Invalid input. Please select again:")
 
 
 
@@ -290,12 +300,13 @@ def show_filtered_jobs(jobs):
         heading(f"Filtered jobs")
         for job in jobs:
             print(job)
-        print("Select an id to show the jobs details, or press enter to go back to the filter menu:")
+        user_action("Select an ID to show the jobs details, or press enter to go back to the filter menu:")
         choice = input()
         if choice.isdigit():
             job_id = int(choice)
             show_job_details(job_id)
         else:
+            clear()
             filter_jobs()
             
     else:
@@ -323,13 +334,13 @@ def view_all_jobs():
             print("That's all of the open roles currently available.")
             loop=False
 
-
     print("\nWhat would you like to do next?")
 
     while True:
         print("View a job - please enter the ID of the job you'd like to view")
-        print("Filter jobs - select 'filter'")
-        print("Menu - back to the main menu")
+        print("Filter jobs - enter 'filter'")
+        print("Menu - enter 'menu' to go back to the main menu")
+        user_action("\nPlease enter an option:")
         choice = input()
         clear() 
 
@@ -355,7 +366,6 @@ def withdraw (id):
         print(f"Application ID{id} successfully deleted")
     else:
         print(f"You don't appear to have any applications with ID{id}. Here are your current applications:")
-        show_applications()
 
 
 def show_applications():
@@ -367,7 +377,7 @@ def show_applications():
             for application in applications:
                 company = session.query(Company).filter(Company.id == application.job.company_id).first()
                 print(f"{application} | {company}")
-            choice = handle_yes_no("\nWould you like to withdraw any applications?")
+            choice = handle_yes_no("\nWould you like to withdraw any applications?"+Style.RESET_ALL)
             if choice:
                 print(Fore.RED+"Please enter the ID to withdraw:"+Style.RESET_ALL)
                 id = input()
@@ -389,14 +399,14 @@ def update_details():
     user_to_update = session.query(Candidate).filter(Candidate.id==logged_user.id).first()
     choice = handle_yes_no("Update name?")
     if choice: 
-        print("Enter updated name:")
+        user_action("Enter updated name:")
         name=input()
         user_to_update.full_name = name
         logged_user.full_name = name
         session.commit()
     choice = handle_yes_no("Update email?")
     if choice:
-        print("Enter updated email:")
+        user_action("Enter updated email:")
         email=input()
         valid_email = check_email(email)
         user_to_update.email = valid_email
@@ -411,7 +421,7 @@ def delete_profile():
     global logged_user
     print("Deleting your profile will remove any open applications and log you out")
 
-    choice = handle_yes_no(Fore.RED+"Are you sure you want to delete your profile?"+Style.RESET_ALL)
+    choice = handle_yes_no("Are you sure you want to delete your profile?",Fore.RED)
     if choice:
         user_to_delete = session.query(Candidate).filter(Candidate.id==logged_user.id).first()
         apps_to_delete = session.query(Application).filter(Application.candidate_id==logged_user.id).all()
@@ -428,7 +438,8 @@ def delete_profile():
 def candidate_details():
     subheading("Your details")
     print(f"Name: {logged_user.full_name}\nEmail: {logged_user.email}")
-    print("Would you like to 'update' your details or 'delete' your account? \nSelect 'menu' to go back")
+    user_action("\nWould you like to 'update' your details or 'delete' your account?")
+    user_hint("Enter 'menu' to go back")
     loop = True
     while loop:
         choice = input()
@@ -441,7 +452,8 @@ def candidate_details():
         elif choice == "menu":
             break
         else:
-            print("Please enter a valid option. You can select 'update', 'delete' or 'menu':")
+            user_action("Please enter a valid option:")
+            user_hint("You can enter 'update', 'delete' or 'menu'")
 
 
 def start():
@@ -479,10 +491,11 @@ def start():
                         loop = False
                         break
                     else:
-                        print("Invalid input. Please select again:")
+                        user_action("Invalid selection. Please try again:")
                         choice = input()
-    print("Thanks for using the Job Board CLI App!")
+    print("👋👋👋  Thanks for using the Job Board CLI App! 👋👋👋\n")
 
 
 if __name__ == "__main__":
+    clear()
     start()
