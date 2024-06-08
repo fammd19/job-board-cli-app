@@ -4,9 +4,6 @@ from sqlalchemy import func, and_
 from colorama import Fore, Back, Style
 import re
 
-#when updating email, allow user to go back?
-#easily check jd of a job already applied 
-
 logged_user = None
 
 departments = [(i+1, department) for i, department in enumerate(dep_list)]
@@ -163,7 +160,7 @@ def show_job_details(id):
             clear()
             subheading("Job details")
             print(f"""
-            {job.id}: {job.title}, {job.department}
+            Job ID {job.id}: {job.title}, {job.department}
             Date posted: {job.date_posted}
             Salary: {job.salary}
             Company: {company.name}
@@ -171,8 +168,19 @@ def show_job_details(id):
             Size: {company.size}
             """)
 
-            apply(job, company)
-            break
+            application = session.query(Application).filter(Application.job_id==id, Application.candidate_id==logged_user.id).first()
+            if application:
+                choice = handle_yes_no("\nyou have applied to this job previously. Would you like to withdraw your application?"+Style.RESET_ALL)
+                if choice:
+                    withdraw(application.id)
+                    break
+                else:
+                    clear()
+                    break
+            
+            else:
+                apply(job, company)
+                break
 
         else:
             user_action("Please enter a valid job ID or press enter to go to the main menu")
@@ -184,7 +192,7 @@ def apply(job, company):
     if choice:
         applications = session.query(Application).filter(Application.candidate_id==logged_user.id).all()
         if len(applications) < 3:
-            application = session.query(Application).filter(and_(Application.job_id==job.id, Application.candidate_id==logged_user.id)).first()
+            application = session.query(Application).filter(Application.job_id==job.id, Application.candidate_id==logged_user.id).first()
             if application:
                 print("You've already applied for this role. Here are your current applications:")
                 show_applications()
@@ -377,11 +385,15 @@ def show_applications():
             for application in applications:
                 company = session.query(Company).filter(Company.id == application.job.company_id).first()
                 print(f"{application} | {company}")
-            choice = handle_yes_no("\nWould you like to withdraw any applications?"+Style.RESET_ALL)
+            choice = handle_yes_no("\nWould you like to view or withdraw any applications?"+Style.RESET_ALL)
             if choice:
-                print(Fore.RED+"Please enter the ID to withdraw:"+Style.RESET_ALL)
+                user_action("Please enter the application ID you'd like to view:")
                 id = input()
-                withdraw(id)
+                app_to_show = session.query(Application).filter(Application.id==id, Application.candidate_id==logged_user.id).first()
+                if app_to_show:
+                    show_job_details(app_to_show.job_id)
+                else:
+                    print("You don't appear to have applied for that job. Here are your current applications:")
             else:
                 clear()
                 break
@@ -399,19 +411,37 @@ def update_details():
     user_to_update = session.query(Candidate).filter(Candidate.id==logged_user.id).first()
     choice = handle_yes_no("Update name?")
     if choice: 
-        user_action("Enter updated name:")
-        name=input()
-        user_to_update.full_name = name
-        logged_user.full_name = name
-        session.commit()
+        loop = True
+        while loop:
+            user_action("Enter updated name:")
+            name=input()
+            if name == "back":
+                clear()
+                break
+            elif name:
+                user_to_update.full_name = name
+                logged_user.full_name = name
+                session.commit()
+                break
+            else:
+                print("Name cannot be blank. If you want to update your name, please try again. Otherwise, enter 'back")
     choice = handle_yes_no("Update email?")
     if choice:
-        user_action("Enter updated email:")
-        email=input()
-        valid_email = check_email(email)
-        user_to_update.email = valid_email
-        logged_user.email = valid_email
-        session.commit()
+        loop = True
+        while loop:
+            user_action("Enter updated email:")
+            email=input()
+            if email == "back":
+                clear()
+                break
+            elif email:
+                valid_email = check_email(email)
+                user_to_update.email = valid_email
+                logged_user.email = valid_email
+                session.commit()
+                break
+            else:
+                print("Email cannot be blank. If you want to update your email, please try again. Otherwise, enter 'back'")
     clear()
     subheading("Your details")
     print(f"{logged_user.full_name} - {logged_user.email}")
