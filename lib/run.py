@@ -170,7 +170,7 @@ def show_job_details(id):
 
             application = session.query(Application).filter(Application.job_id==id, Application.candidate_id==logged_user.id).first()
             if application:
-                choice = handle_yes_no("\nyou have applied to this job previously. Would you like to withdraw your application?"+Style.RESET_ALL)
+                choice = handle_yes_no("\nYou have applied to this job previously. Would you like to withdraw your application?"+Style.RESET_ALL)
                 if choice:
                     withdraw(application.id)
                     break
